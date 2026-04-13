@@ -13,13 +13,15 @@ struct MetricTemplate: Identifiable {
     let color: Color
 
     static let predefined: [MetricTemplate] = [
-        MetricTemplate(name: "Body Fat", symbol: "%",  iconName: "percent",       color: .orange),
-        MetricTemplate(name: "BMI",      symbol: "",   iconName: "chart.bar.fill", color: .purple),
-        MetricTemplate(name: "Waist",    symbol: "cm", iconName: "ruler.fill",     color: .teal),
-        MetricTemplate(name: "Hip",      symbol: "cm", iconName: "ruler.fill",     color: .pink),
-        MetricTemplate(name: "Chest",    symbol: "cm", iconName: "ruler.fill",     color: .indigo),
-        MetricTemplate(name: "Neck",     symbol: "cm", iconName: "ruler.fill",     color: .mint),
-        MetricTemplate(name: "Arm",      symbol: "cm", iconName: "ruler.fill",     color: .cyan),
+        MetricTemplate(name: "Weight",   symbol: "kg", iconName: "scalemass.fill",  color: .blue),
+        MetricTemplate(name: "Height",   symbol: "cm", iconName: "figure.stand",    color: .green),
+        MetricTemplate(name: "Body Fat", symbol: "%",  iconName: "percent",         color: .orange),
+        MetricTemplate(name: "BMI",      symbol: "",   iconName: "chart.bar.fill",  color: .purple),
+        MetricTemplate(name: "Waist",    symbol: "cm", iconName: "ruler.fill",      color: .teal),
+        MetricTemplate(name: "Hip",      symbol: "cm", iconName: "ruler.fill",      color: .pink),
+        MetricTemplate(name: "Chest",    symbol: "cm", iconName: "ruler.fill",      color: .indigo),
+        MetricTemplate(name: "Neck",     symbol: "cm", iconName: "ruler.fill",      color: .mint),
+        MetricTemplate(name: "Arm",      symbol: "cm", iconName: "ruler.fill",      color: .cyan),
     ]
 }
 
