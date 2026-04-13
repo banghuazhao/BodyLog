@@ -63,4 +63,16 @@ final class SettingsViewModel {
             errorMessage = error.localizedDescription
         }
     }
+
+    func updateColor(for metric: Metric, colorHex: String?) async {
+        do {
+            try await database.write { db in
+                try Metric.find(metric.id).update {
+                    $0.colorHex = #bind(colorHex)
+                }.execute(db)
+            }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
 }

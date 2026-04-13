@@ -84,13 +84,17 @@ private struct MetricSettingsRow: View {
 
     var body: some View {
         Button(action: onTap) {
-            HStack {
+            HStack(spacing: 12) {
+                // Color swatch
+                Circle()
+                    .fill(metric.accentColor)
+                    .frame(width: 26, height: 26)
+                    .overlay(Circle().strokeBorder(.quaternary, lineWidth: 0.5))
+
                 VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
-                        Text(metric.name)
-                            .font(.body)
-                            .foregroundStyle(.primary)
-                    }
+                    Text(metric.name)
+                        .font(.body)
+                        .foregroundStyle(.primary)
 
                     let startStr = metric.startValue.map {
                         metric.displayValue($0, unitSystem: appState.unitSystem)
@@ -112,6 +116,7 @@ private struct MetricSettingsRow: View {
                     .font(.caption)
                     .foregroundStyle(.tertiary)
             }
+            .contentShape(.rect)
         }
         .buttonStyle(.plain)
     }
@@ -131,7 +136,7 @@ struct AddMetricView: View {
             Form {
                 Section("Metric Details") {
                     TextField("Name (e.g. Body Fat)", text: $name)
-                    TextField("Unit symbol (e.g. %)", text: $symbol)
+                    TextField("Unit symbol (e.g. kg, cm, %)", text: $symbol)
                 }
             }
             .navigationTitle("Add Metric")

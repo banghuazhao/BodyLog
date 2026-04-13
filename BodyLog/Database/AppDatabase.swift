@@ -24,7 +24,8 @@ func makeAppDatabase() throws -> any DatabaseWriter {
               "kind"       INTEGER NOT NULL DEFAULT 2,
               "sortOrder"  INTEGER NOT NULL DEFAULT 0,
               "startValue" REAL,
-              "goalValue"  REAL
+              "goalValue"  REAL,
+              "colorHex"   TEXT
             ) STRICT
             """
         ).execute(db)

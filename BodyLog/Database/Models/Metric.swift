@@ -20,6 +20,7 @@ nonisolated struct Metric: Identifiable, Hashable, Sendable {
     var sortOrder: Int = 0
     var startValue: Double?
     var goalValue: Double?
+    var colorHex: String?
 }
 
 extension Metric {
@@ -60,13 +61,21 @@ extension Metric {
         return max(0, min(1, p))
     }
 
+    /// The user-chosen color if set, otherwise the automatic default.
     var accentColor: Color {
+        if let hex = colorHex, let color = Color(hex: hex) { return color }
+        return defaultAccentColor
+    }
+
+    /// The automatic color derived from kind and sort order (no user override).
+    var defaultAccentColor: Color {
         switch kind {
         case .weight: return .blue
         case .height: return .green
         case .custom:
             let palette: [Color] = [.purple, .orange, .teal, .pink, .indigo, .mint, .cyan]
-            return palette[sortOrder % palette.count]
+            let absSortOrder = sortOrder < 0 ? -sortOrder: sortOrder
+            return palette[absSortOrder % palette.count]
         }
     }
 
