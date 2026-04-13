@@ -11,17 +11,11 @@ struct TrendView: View {
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
+                // Metric chip picker
                 if !viewModel.metrics.isEmpty {
                     @Bindable var vm = viewModel
-                    Picker("Metric", selection: $vm.selectedMetricId) {
-                        ForEach(viewModel.metrics) { metric in
-                            Text(metric.name).tag(metric.id as Metric.ID?)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal)
-                    .padding(.vertical, 8)
-                    .background(.bar)
+                    MetricChipPicker(metrics: viewModel.metrics, selectedId: $vm.selectedMetricId)
+                    Divider()
                 }
 
                 if viewModel.chartDataPoints.isEmpty {
@@ -33,11 +27,12 @@ struct TrendView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
                     ScrollView {
-                        VStack(alignment: .leading, spacing: 24) {
+                        VStack(spacing: 16) {
+                            timeRangePicker
                             chartCard
                             statsCard
                         }
-                        .padding()
+                        .padding(16)
                     }
                 }
             }
@@ -56,83 +51,158 @@ struct TrendView: View {
         }
     }
 
-    // MARK: - Chart Card
+    // MARK: - Time range picker
+
+    private var timeRangePicker: some View {
+        @Bindable var vm = viewModel
+        return HStack(spacing: 6) {
+            ForEach(TimeRange.allCases) { range in
+                Button {
+                    withAnimation(.spring(response: 0.3, dampingFraction: 0.7)) {
+                        viewModel.selectedTimeRange = range
+                    }
+                } label: {
+                    Text(range.rawValue)
+                        .font(.caption.weight(.semibold))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(
+                            viewModel.selectedTimeRange == range
+                                ? (viewModel.selectedMetric?.accentColor ?? .blue)
+                                : Color.secondary.opacity(0.1),
+                            in: Capsule()
+                        )
+                        .foregroundStyle(
+                            viewModel.selectedTimeRange == range ? .white : .secondary
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+            Spacer()
+
+            if let count = viewModel.filteredChartDataPoints.count as Int?, count > 0 {
+                Text("\(count) entries")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    // MARK: - Chart card
 
     private var chartCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(viewModel.selectedMetric?.name ?? "")
-                .font(.headline)
+        let color = viewModel.selectedMetric?.accentColor ?? .blue
+        let points = viewModel.filteredChartDataPoints
+        let minY = viewModel.minValue
+        let maxY = viewModel.maxValue
+        let padding = max((maxY - minY) * 0.1, 0.5)
 
-            Chart(viewModel.chartDataPoints) { point in
+        return VStack(alignment: .leading, spacing: 12) {
+            if let metric = viewModel.selectedMetric {
+                Label(metric.name, systemImage: metric.iconName)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(color)
+            }
+
+            Chart(points) { point in
                 LineMark(
                     x: .value("Date", point.date),
                     y: .value("Value", point.displayValue)
                 )
-                .foregroundStyle(.blue)
+                .foregroundStyle(color)
                 .interpolationMethod(.catmullRom)
+                .lineStyle(StrokeStyle(lineWidth: 2.5))
 
                 AreaMark(
                     x: .value("Date", point.date),
-                    yStart: .value("Min", viewModel.minValue * 0.95),
+                    yStart: .value("Min", minY - padding),
                     yEnd: .value("Value", point.displayValue)
                 )
-                .foregroundStyle(.blue.opacity(0.1))
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [color.opacity(0.25), color.opacity(0.0)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
                 .interpolationMethod(.catmullRom)
 
-                PointMark(
-                    x: .value("Date", point.date),
-                    y: .value("Value", point.displayValue)
-                )
-                .foregroundStyle(.blue)
-                .symbolSize(30)
+                if points.count <= 15 {
+                    PointMark(
+                        x: .value("Date", point.date),
+                        y: .value("Value", point.displayValue)
+                    )
+                    .foregroundStyle(color)
+                    .symbolSize(25)
+                }
             }
             .chartYAxisLabel(viewModel.yAxisLabel)
-            .chartYScale(domain: (viewModel.minValue * 0.95)...(viewModel.maxValue * 1.05))
+            .chartYScale(domain: (minY - padding)...(maxY + padding))
             .chartXAxis {
                 AxisMarks(values: .automatic) { _ in
-                    AxisGridLine()
+                    AxisGridLine().foregroundStyle(.secondary.opacity(0.2))
                     AxisValueLabel(format: .dateTime.month(.abbreviated).day())
+                        .foregroundStyle(.secondary)
                 }
             }
-            .frame(height: 240)
+            .chartYAxis {
+                AxisMarks { _ in
+                    AxisGridLine().foregroundStyle(.secondary.opacity(0.15))
+                    AxisValueLabel()
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .frame(height: 220)
         }
-        .padding()
-        .background(.regularMaterial)
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .padding(16)
+        .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 20))
+        .overlay {
+            RoundedRectangle(cornerRadius: 20)
+                .strokeBorder(color.opacity(0.1), lineWidth: 1)
+        }
+        .shadow(color: color.opacity(0.07), radius: 10, y: 4)
     }
 
-    // MARK: - Stats Card
+    // MARK: - Stats card
 
+    @ViewBuilder
     private var statsCard: some View {
-        let points = viewModel.chartDataPoints
-        guard !points.isEmpty else { return AnyView(EmptyView()) }
+        let points = viewModel.filteredChartDataPoints
+        if !points.isEmpty {
+            let color = viewModel.selectedMetric?.accentColor ?? .blue
+            let unit = viewModel.yAxisLabel
+            let first = points.first!.displayValue
+            let last = points.last!.displayValue
+            let change = last - first
+            let minVal = points.map(\.displayValue).min()!
+            let maxVal = points.map(\.displayValue).max()!
+            let avg = points.map(\.displayValue).reduce(0, +) / Double(points.count)
 
-        let unit = viewModel.yAxisLabel
-        let first = points.first!.displayValue
-        let last = points.last!.displayValue
-        let change = last - first
-        let minVal = points.map(\.displayValue).min()!
-        let maxVal = points.map(\.displayValue).max()!
-        let avg = points.map(\.displayValue).reduce(0, +) / Double(points.count)
-
-        return AnyView(
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 12) {
                 Text("Statistics")
-                    .font(.headline)
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.secondary)
 
-                LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 12) {
-                    StatTile(title: "First", value: first, unit: unit)
-                    StatTile(title: "Latest", value: last, unit: unit)
-                    StatTile(title: "Change", value: change, unit: unit, showSign: true)
-                    StatTile(title: "Average", value: avg, unit: unit)
-                    StatTile(title: "Minimum", value: minVal, unit: unit)
-                    StatTile(title: "Maximum", value: maxVal, unit: unit)
+                LazyVGrid(
+                    columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())],
+                    spacing: 10
+                ) {
+                    StatTile(title: "First", value: first, unit: unit, color: color)
+                    StatTile(title: "Latest", value: last, unit: unit, color: color)
+                    StatTile(title: "Change", value: change, unit: unit, color: color, showSign: true)
+                    StatTile(title: "Average", value: avg, unit: unit, color: color)
+                    StatTile(title: "Min", value: minVal, unit: unit, color: color)
+                    StatTile(title: "Max", value: maxVal, unit: unit, color: color)
                 }
             }
-            .padding()
-            .background(.regularMaterial)
-            .clipShape(RoundedRectangle(cornerRadius: 16))
-        )
+            .padding(16)
+            .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 20))
+            .overlay {
+                RoundedRectangle(cornerRadius: 20)
+                    .strokeBorder(color.opacity(0.1), lineWidth: 1)
+            }
+            .shadow(color: color.opacity(0.07), radius: 10, y: 4)
+        }
     }
 }
 
@@ -142,32 +212,34 @@ private struct StatTile: View {
     let title: String
     let value: Double
     let unit: String
+    let color: Color
     var showSign: Bool = false
 
-    private var valueText: String {
-        let formatted = value.formatted(.number.precision(.fractionLength(1)))
-        if showSign && value > 0 { return "+\(formatted)" }
-        return formatted
+    private var formatted: String {
+        let str = value.formatted(.number.precision(.fractionLength(1)))
+        return showSign && value > 0 ? "+\(str)" : str
     }
 
     private var valueColor: Color {
         guard showSign else { return .primary }
-        return value < 0 ? .green : (value > 0 ? .red : .primary)
+        return value < 0 ? .green : (value > 0 ? .red : .secondary)
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(title)
-                .font(.caption)
+                .font(.caption2.weight(.medium))
                 .foregroundStyle(.secondary)
-            Text("\(valueText) \(unit)")
-                .font(.subheadline)
-                .fontWeight(.semibold)
-                .foregroundStyle(valueColor)
+                .textCase(.uppercase)
+            Text(formatted)
+                .font(.subheadline.weight(.bold))
+                .foregroundStyle(showSign ? valueColor : color)
+            Text(unit)
+                .font(.caption2)
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(10)
-        .background(.background)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .background(color.opacity(0.06), in: RoundedRectangle(cornerRadius: 12))
     }
 }

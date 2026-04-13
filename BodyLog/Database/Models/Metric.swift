@@ -3,6 +3,7 @@
 
 import Foundation
 import SQLiteData
+import SwiftUI
 
 enum BodyMetricKind: Int, QueryBindable, Codable, Sendable {
     case weight = 0
@@ -57,5 +58,23 @@ extension Metric {
         guard let start = startValue, let goal = goalValue, start != goal else { return nil }
         let p = (currentValue - start) / (goal - start)
         return max(0, min(1, p))
+    }
+
+    var accentColor: Color {
+        switch kind {
+        case .weight: return .blue
+        case .height: return .green
+        case .custom:
+            let palette: [Color] = [.purple, .orange, .teal, .pink, .indigo, .mint, .cyan]
+            return palette[sortOrder % palette.count]
+        }
+    }
+
+    var iconName: String {
+        switch kind {
+        case .weight: return "scalemass.fill"
+        case .height: return "figure.stand"
+        case .custom: return "chart.xyaxis.line"
+        }
     }
 }

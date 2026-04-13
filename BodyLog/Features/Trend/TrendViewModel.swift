@@ -11,6 +11,25 @@ struct ChartDataPoint: Identifiable {
     let displayValue: Double
 }
 
+enum TimeRange: String, CaseIterable, Identifiable {
+    case week = "7D"
+    case month = "1M"
+    case threeMonths = "3M"
+    case all = "All"
+
+    var id: String { rawValue }
+
+    var cutoffDate: Date? {
+        let cal = Calendar.current
+        switch self {
+        case .week: return cal.date(byAdding: .day, value: -7, to: Date())
+        case .month: return cal.date(byAdding: .month, value: -1, to: Date())
+        case .threeMonths: return cal.date(byAdding: .month, value: -3, to: Date())
+        case .all: return nil
+        }
+    }
+}
+
 @Observable
 @MainActor
 final class TrendViewModel {
@@ -26,6 +45,7 @@ final class TrendViewModel {
     @Dependency(\.defaultDatabase) private var database
 
     var selectedMetricId: Metric.ID?
+    var selectedTimeRange: TimeRange = .all
     var errorMessage: String?
 
     var selectedMetric: Metric? {
@@ -45,16 +65,21 @@ final class TrendViewModel {
         }
     }
 
+    var filteredChartDataPoints: [ChartDataPoint] {
+        guard let cutoff = selectedTimeRange.cutoffDate else { return chartDataPoints }
+        return chartDataPoints.filter { $0.date >= cutoff }
+    }
+
     var yAxisLabel: String {
         selectedMetric?.displaySymbol(unitSystem: unitSystem) ?? ""
     }
 
     var minValue: Double {
-        chartDataPoints.map(\.displayValue).min() ?? 0
+        filteredChartDataPoints.map(\.displayValue).min() ?? 0
     }
 
     var maxValue: Double {
-        chartDataPoints.map(\.displayValue).max() ?? 100
+        filteredChartDataPoints.map(\.displayValue).max() ?? 100
     }
 
     // MARK: - Actions
