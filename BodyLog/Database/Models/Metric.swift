@@ -9,6 +9,8 @@ enum BodyMetricKind: Int, QueryBindable, Codable, Sendable {
     case weight = 0
     case height = 1
     case custom = 2
+    /// Body circumference (waist, hip, chest, neck, arm) — converts between cm and in.
+    case circumference = 3
 }
 
 @Table
@@ -27,7 +29,7 @@ extension Metric {
     func displaySymbol(unitSystem: UnitSystem) -> String {
         switch kind {
         case .weight: return unitSystem == .imperial ? "lbs" : "kg"
-        case .height: return unitSystem == .imperial ? "in" : "cm"
+        case .height, .circumference: return unitSystem == .imperial ? "in" : "cm"
         case .custom: return symbol
         }
     }
@@ -36,7 +38,7 @@ extension Metric {
         switch kind {
         case .weight:
             return unitSystem == .imperial ? rawValue * 2.20462 : rawValue
-        case .height:
+        case .height, .circumference:
             return unitSystem == .imperial ? rawValue * 0.393701 : rawValue
         case .custom:
             return rawValue
@@ -47,7 +49,7 @@ extension Metric {
         switch kind {
         case .weight:
             return unitSystem == .imperial ? displayValue / 2.20462 : displayValue
-        case .height:
+        case .height, .circumference:
             return unitSystem == .imperial ? displayValue / 0.393701 : displayValue
         case .custom:
             return displayValue
@@ -72,17 +74,21 @@ extension Metric {
         switch kind {
         case .weight: return .blue
         case .height: return .green
-        case .custom:
+        case .custom, .circumference:
             let palette: [Color] = [.purple, .orange, .teal, .pink, .indigo, .mint, .cyan]
-            let absSortOrder = sortOrder < 0 ? -sortOrder: sortOrder
-            return palette[absSortOrder % palette.count]
+            return palette[abs(sortOrder) % palette.count]
         }
+    }
+    
+    func abs(_ value: Int) -> Int{
+        value < 0 ? -value : value
     }
 
     var iconName: String {
         switch kind {
         case .weight: return "scalemass.fill"
         case .height: return "figure.stand"
+        case .circumference: return "ruler.fill"
         case .custom: return "chart.xyaxis.line"
         }
     }

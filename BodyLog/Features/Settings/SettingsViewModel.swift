@@ -19,13 +19,18 @@ final class SettingsViewModel {
 
     // MARK: - Metric Management
 
-    func addMetric(name: String, symbol: String) async {
+    func addMetric(name: String, symbol: String, kind: BodyMetricKind = .custom) async {
         guard !name.trimmingCharacters(in: .whitespaces).isEmpty else { return }
         do {
             let nextOrder = (metrics.last?.sortOrder ?? -1) + 1
             try await database.write { db in
                 try Metric.insert {
-                    Metric.Draft(name: name.trimmingCharacters(in: .whitespaces), symbol: symbol.trimmingCharacters(in: .whitespaces), kind: .custom, sortOrder: nextOrder)
+                    Metric.Draft(
+                        name: name.trimmingCharacters(in: .whitespaces),
+                        symbol: symbol.trimmingCharacters(in: .whitespaces),
+                        kind: kind,
+                        sortOrder: nextOrder
+                    )
                 }.execute(db)
             }
         } catch {
