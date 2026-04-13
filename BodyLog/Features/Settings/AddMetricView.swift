@@ -79,6 +79,24 @@ struct AddMetricView: View {
         !name.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
+    /// The kind to actually save.
+    /// Template picks are trusted as-is; free-text symbols are inferred.
+    private var inferredKind: BodyMetricKind {
+        selectedTemplate != nil ? selectedKind : BodyMetricKind.infer(from: symbol)
+    }
+
+    /// Shown when the user typed a recognised unit and no template is selected.
+    private var conversionHint: String? {
+        switch inferredKind {
+        case .weight:
+            return "Recognised as weight — values will auto-convert between kg and lbs when you switch unit systems."
+        case .circumference:
+            return "Recognised as length — values will auto-convert between cm and in when you switch unit systems."
+        default:
+            return nil
+        }
+    }
+
     var body: some View {
         NavigationStack {
             Form {
@@ -97,7 +115,7 @@ struct AddMetricView: View {
                             await viewModel.addMetric(
                                 name: name,
                                 symbol: symbol,
-                                kind: selectedKind
+                                kind: inferredKind
                             )
                         }
                         dismiss()
@@ -141,21 +159,32 @@ struct AddMetricView: View {
     // MARK: Custom entry section
 
     private var customSection: some View {
-        Section("Details") {
+        Section {
+            // Name row
             HStack(spacing: 10) {
                 Image(systemName: templateIcon)
                     .foregroundStyle(templateColor)
                     .frame(width: 22)
                 TextField("Name", text: $name)
             }
-
+            
             HStack(spacing: 10) {
-                Image(systemName: "tag.fill")
-                    .foregroundStyle(.secondary)
+                Image(systemName: inferredKind == .custom ? "tag.fill" : "arrow.triangle.2.circlepath")
+                    .foregroundStyle(inferredKind == .custom ? Color.secondary : Color.blue)
                     .frame(width: 22)
-                TextField("Unit symbol  (e.g. %, bpm)", text: $symbol)
+                    .animation(.easeInOut(duration: 0.2), value: inferredKind == .custom)
+                TextField("Unit symbol  (e.g. kg, cm, %)", text: $symbol)
+            }
+        } header: {
+            Text("Details")
+        } footer: {
+            if let hint = conversionHint {
+                Label(hint, systemImage: "info.circle")
+                    .font(.caption)
+                    .foregroundStyle(.blue)
             }
         }
+        .animation(.easeInOut(duration: 0.2), value: conversionHint != nil)
     }
 
     // MARK: Helpers

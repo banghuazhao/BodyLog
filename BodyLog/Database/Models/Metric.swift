@@ -13,6 +13,18 @@ enum BodyMetricKind: Int, QueryBindable, Codable, Sendable {
     case circumference = 3
 }
 
+extension BodyMetricKind {
+    /// Infers the most appropriate kind from a user-typed unit symbol.
+    /// Returns `.custom` when the symbol is not a recognised unit.
+    static func infer(from symbol: String) -> BodyMetricKind {
+        switch symbol.trimmingCharacters(in: .whitespaces).lowercased() {
+        case "kg", "lb", "lbs": return .weight
+        case "cm", "in":        return .circumference
+        default:                return .custom
+        }
+    }
+}
+
 @Table
 nonisolated struct Metric: Identifiable, Hashable, Sendable {
     let id: Int
