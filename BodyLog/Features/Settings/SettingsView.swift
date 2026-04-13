@@ -51,7 +51,7 @@ struct SettingsView: View {
         } header: {
             Text("Units")
         } footer: {
-            Text("Changing units converts how values are displayed. Built-in metrics (Weight, Height) will convert automatically.")
+            Text("Changing units converts how values are displayed. For example, Weight or Height will convert automatically.")
         }
     }
 
@@ -68,7 +68,7 @@ struct SettingsView: View {
         } header: {
             Text("Metrics")
         } footer: {
-            Text("Tap a metric to set start and goal values. Built-in metrics cannot be deleted.")
+            Text("Tap a metric to set start and goal values.")
         }
     }
 }

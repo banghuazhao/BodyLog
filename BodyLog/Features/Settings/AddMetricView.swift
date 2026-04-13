@@ -149,27 +149,11 @@ struct AddMetricView: View {
                 TextField("Name", text: $name)
             }
 
-            if selectedKind == .circumference {
-                // Circumference metrics auto-convert — show the resolved unit
-                HStack(spacing: 10) {
-                    Image(systemName: "ruler.fill")
-                        .foregroundStyle(.secondary)
-                        .frame(width: 22)
-                    Text("Unit")
-                    Spacer()
-                    Text(appState.unitSystem == .imperial ? "in" : "cm")
-                        .foregroundStyle(.secondary)
-                    Text("(auto-converts with unit system)")
-                        .font(.caption2)
-                        .foregroundStyle(.tertiary)
-                }
-            } else {
-                HStack(spacing: 10) {
-                    Image(systemName: "tag.fill")
-                        .foregroundStyle(.secondary)
-                        .frame(width: 22)
-                    TextField("Unit symbol  (e.g. %, bpm)", text: $symbol)
-                }
+            HStack(spacing: 10) {
+                Image(systemName: "tag.fill")
+                    .foregroundStyle(.secondary)
+                    .frame(width: 22)
+                TextField("Unit symbol  (e.g. %, bpm)", text: $symbol)
             }
         }
     }
