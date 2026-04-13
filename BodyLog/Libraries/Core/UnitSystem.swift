@@ -11,8 +11,25 @@ enum UnitSystem: String, CaseIterable, Identifiable, Codable {
 
     var displayName: String {
         switch self {
-        case .metric: return "Metric (kg, cm)"
-        case .imperial: return "Imperial (lbs, in)"
+        case .metric:   return "Metric"
+        case .imperial: return "Imperial"
+        }
+    }
+
+    /// All recognised metric ↔ imperial unit pairs for this app.
+    static let conversionPairs: [(metric: String, imperial: String)] = [
+        ("kg",  "lbs"),
+        ("g",   "oz"),
+        ("m",   "ft"),
+        ("cm",  "in"),
+        ("mm",  "in"),
+    ]
+
+    /// Units used when this system is active.
+    var activeUnits: [String] {
+        switch self {
+        case .metric:   return Self.conversionPairs.map(\.metric)
+        case .imperial: return Self.conversionPairs.map(\.imperial)
         }
     }
 }

@@ -46,12 +46,12 @@ struct AddMetricView: View {
     /// Shown when the typed symbol is a recognised unit.
     private var conversionHint: String? {
         switch inferredKind {
-        case .weight:
-            return "Recognised as weight — values will auto-convert between kg and lbs when you switch unit systems."
-        case .circumference:
-            return "Recognised as length — values will auto-convert between cm and in when you switch unit systems."
-        default:
-            return nil
+        case .weight:           return "Recognised as weight — auto-converts between kg and lbs."
+        case .circumference:    return "Recognised as length — auto-converts between cm and in."
+        case .gramOunce:        return "Recognised as small weight — auto-converts between g and oz."
+        case .meterFoot:        return "Recognised as large length — auto-converts between m and ft."
+        case .millimeterInch:   return "Recognised as fine length — auto-converts between mm and in."
+        default:                return nil
         }
     }
 

@@ -42,16 +42,22 @@ struct SettingsView: View {
     private var unitSection: some View {
         Section {
             @Bindable var state = appState
-            Picker("Unit System", selection: $state.unitSystem) {
+            HStack(spacing: 12) {
                 ForEach(UnitSystem.allCases) { system in
-                    Text(system.displayName).tag(system)
+                    UnitSystemCard(
+                        system: system,
+                        isSelected: state.unitSystem == system
+                    ) {
+                        state.unitSystem = system
+                    }
                 }
             }
-            .pickerStyle(.navigationLink)
+            .listRowInsets(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10))
+            .listRowBackground(Color.clear)
         } header: {
             Text("Units")
         } footer: {
-            Text("Changing units converts how values are displayed. For example, Weight or Height will convert automatically.")
+            Text("Metrics with recognised units (kg, g, m, cm, mm, lbs, oz, ft, in) auto-convert when you switch. Custom symbols are unaffected.")
         }
     }
 
@@ -70,6 +76,47 @@ struct SettingsView: View {
         } footer: {
             Text("Tap a metric to set start and goal values.")
         }
+    }
+}
+
+// MARK: - Unit System Card
+
+private struct UnitSystemCard: View {
+    let system: UnitSystem
+    let isSelected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(alignment: .leading, spacing: 10) {
+                // Header
+                HStack(spacing: 6) {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .font(.subheadline)
+                        .foregroundStyle(isSelected ? .white : .secondary)
+                    Text(system.displayName)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(isSelected ? .white : .primary)
+                }
+
+                Text(system.activeUnits.joined(separator: ","))
+                    .font(.caption.weight(.semibold))
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                isSelected ? Color.blue : Color.secondary.opacity(0.07),
+                in: RoundedRectangle(cornerRadius: 16)
+            )
+            .overlay {
+                if !isSelected {
+                    RoundedRectangle(cornerRadius: 16)
+                        .strokeBorder(Color.secondary.opacity(0.2), lineWidth: 1)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
     }
 }
 
