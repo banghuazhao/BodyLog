@@ -50,12 +50,12 @@ final class OverviewViewModel {
 
     // MARK: - Quick log
 
-    func quickAddEntry(value: Double, for metric: Metric) async {
+    func quickAddEntry(value: Double, date: Date, for metric: Metric) async {
         do {
             let raw = metric.rawValue(from: value, unitSystem: AppState.shared.unitSystem)
             try await database.write { db in
                 try LogEntry.insert {
-                    LogEntry.Draft(metricId: metric.id, date: Date(), value: raw)
+                    LogEntry.Draft(metricId: metric.id, date: date, value: raw)
                 }.execute(db)
             }
         } catch {

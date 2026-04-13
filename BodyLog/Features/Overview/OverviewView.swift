@@ -46,13 +46,16 @@ struct OverviewView: View {
 
     @Environment(AppState.self) private var appState
     @State private var showingQuickLog = false
-    @State private var quickLogValue: String = ""
 
     private var unit: String { metric.displaySymbol(unitSystem: appState.unitSystem) }
     private var current: Double? { viewModel.currentDisplayValue(for: metric) }
     private var start: Double? { viewModel.startDisplayValue(for: metric) }
     private var goal: Double? { viewModel.goalDisplayValue(for: metric) }
     private var progress: Double? { viewModel.progress(for: metric) }
+
+    private var initialValueString: String {
+        current.map { $0.formatted(.number.precision(.fractionLength(1))) } ?? ""
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -71,11 +74,9 @@ struct OverviewView: View {
         }
         .shadow(color: metric.accentColor.opacity(0.08), radius: 10, y: 4)
         .sheet(isPresented: $showingQuickLog) {
-            QuickLogSheet(metric: metric, value: $quickLogValue) { value in
-                Task { await viewModel.quickAddEntry(value: value, for: metric) }
+            QuickLogSheet(metric: metric, initialValue: initialValueString) { value, date in
+                Task { await viewModel.quickAddEntry(value: value, date: date, for: metric) }
             }
-            .presentationDetents([.height(280)])
-            .presentationCornerRadius(24)
         }
     }
 
@@ -114,9 +115,6 @@ struct OverviewView: View {
 
             VStack(alignment: .trailing, spacing: 10) {
                 Button {
-                    quickLogValue = current.map {
-                        $0.formatted(.number.precision(.fractionLength(1)))
-                    } ?? ""
                     showingQuickLog = true
                 } label: {
                     Image(systemName: "plus.circle.fill")
@@ -189,63 +187,100 @@ struct OverviewView: View {
 
 private struct QuickLogSheet: View {
     let metric: Metric
-    @Binding var value: String
-    let onSave: (Double) -> Void
+    let initialValue: String
+    let onSave: (Double, Date) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @Environment(AppState.self) private var appState
 
+    @State private var value: String
+    @State private var date: Date = Date()
+
+    init(metric: Metric, initialValue: String, onSave: @escaping (Double, Date) -> Void) {
+        self.metric = metric
+        self.initialValue = initialValue
+        self.onSave = onSave
+        _value = State(initialValue: initialValue)
+    }
+
     private var unit: String { metric.displaySymbol(unitSystem: appState.unitSystem) }
+    private var color: Color { metric.accentColor }
     private var isValid: Bool { Double(value) != nil }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Handle
-            Capsule()
-                .fill(.secondary.opacity(0.3))
-                .frame(width: 36, height: 4)
-                .padding(.top, 12)
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 28) {
+                    Label(metric.name, systemImage: metric.iconName)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(color)
+                        .padding(.top, 8)
 
-            // Title
-            Label(metric.name, systemImage: metric.iconName)
-                .font(.headline)
-                .foregroundStyle(metric.accentColor)
-                .padding(.top, 20)
+                    // Value card
+                    VStack(spacing: 6) {
+                        Text("Value")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
 
-            // Value input
-            HStack(alignment: .firstTextBaseline, spacing: 6) {
-                TextField("0.0", text: $value)
-                    .keyboardType(.decimalPad)
-                    .font(.system(size: 52, weight: .bold, design: .rounded))
-                    .multilineTextAlignment(.center)
-                    .foregroundStyle(isValid ? .primary : .secondary)
-                    .frame(maxWidth: .infinity)
-                Text(unit)
-                    .font(.title2.weight(.medium))
-                    .foregroundStyle(.secondary)
+                        HStack(alignment: .firstTextBaseline, spacing: 8) {
+                            TextField("0.0", text: $value)
+                                .keyboardType(.decimalPad)
+                                .font(.system(size: 48, weight: .bold, design: .rounded))
+                                .multilineTextAlignment(.center)
+                                .foregroundStyle(isValid ? .primary : .secondary)
+                            Text(unit)
+                                .font(.title2.weight(.medium))
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.vertical, 16)
+                        .frame(maxWidth: .infinity)
+                        .background(color.opacity(0.06), in: RoundedRectangle(cornerRadius: 16))
+                    }
+
+                    // Date card
+                    VStack(spacing: 6) {
+                        Text("Date & Time")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+
+                        DatePicker(
+                            "Date",
+                            selection: $date,
+                            displayedComponents: [.date, .hourAndMinute]
+                        )
+                        .datePickerStyle(.compact)
+                        .labelsHidden()
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(color.opacity(0.06), in: RoundedRectangle(cornerRadius: 16))
+                    }
+
+                    Spacer()
+                }
+                .padding(.horizontal, 24)
+                .padding(.top, 8)
             }
-            .padding(.horizontal, 32)
-            .padding(.vertical, 24)
-
-            // Save button
-            Button {
-                if let v = Double(value) { onSave(v) }
-                dismiss()
-            } label: {
-                Text("Save Entry")
-                    .font(.headline)
-                    .foregroundStyle(.white)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(
-                        isValid ? metric.accentColor : Color.secondary.opacity(0.3),
-                        in: RoundedRectangle(cornerRadius: 16)
-                    )
+            .navigationTitle("Log \(metric.name)")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        if let v = Double(value) { onSave(v, date) }
+                        dismiss()
+                    }
+                    .fontWeight(.semibold)
+                    .foregroundStyle(isValid ? color : .secondary)
+                    .disabled(!isValid)
+                }
             }
-            .disabled(!isValid)
-            .padding(.horizontal, 24)
-
-            Spacer()
+            .tint(color)
         }
+        .presentationDetents([.medium])
+        .presentationCornerRadius(24)
     }
 }
