@@ -8,58 +8,18 @@ import SwiftUI
 struct MetricTemplate: Identifiable {
     let id = UUID()
     let name: String
-    let kind: BodyMetricKind
+    let symbol: String
     let iconName: String
     let color: Color
-    /// Symbol to use in metric mode; circumference kind shows "cm"/"in" automatically.
-    let customSymbol: String
-
-    /// Returns the symbol to display given the current unit system.
-    func symbol(for unitSystem: UnitSystem) -> String {
-        switch kind {
-        case .circumference:
-            return unitSystem == .imperial ? "in" : "cm"
-        default:
-            return customSymbol
-        }
-    }
 
     static let predefined: [MetricTemplate] = [
-        MetricTemplate(
-            name: "Body Fat", kind: .custom,
-            iconName: "percent", color: .orange,
-            customSymbol: "%"
-        ),
-        MetricTemplate(
-            name: "BMI", kind: .custom,
-            iconName: "chart.bar.fill", color: .purple,
-            customSymbol: ""
-        ),
-        MetricTemplate(
-            name: "Waist", kind: .circumference,
-            iconName: "ruler.fill", color: .teal,
-            customSymbol: "cm"
-        ),
-        MetricTemplate(
-            name: "Hip", kind: .circumference,
-            iconName: "ruler.fill", color: .pink,
-            customSymbol: "cm"
-        ),
-        MetricTemplate(
-            name: "Chest", kind: .circumference,
-            iconName: "ruler.fill", color: .indigo,
-            customSymbol: "cm"
-        ),
-        MetricTemplate(
-            name: "Neck", kind: .circumference,
-            iconName: "ruler.fill", color: .mint,
-            customSymbol: "cm"
-        ),
-        MetricTemplate(
-            name: "Arm", kind: .circumference,
-            iconName: "ruler.fill", color: .cyan,
-            customSymbol: "cm"
-        ),
+        MetricTemplate(name: "Body Fat", symbol: "%",  iconName: "percent",       color: .orange),
+        MetricTemplate(name: "BMI",      symbol: "",   iconName: "chart.bar.fill", color: .purple),
+        MetricTemplate(name: "Waist",    symbol: "cm", iconName: "ruler.fill",     color: .teal),
+        MetricTemplate(name: "Hip",      symbol: "cm", iconName: "ruler.fill",     color: .pink),
+        MetricTemplate(name: "Chest",    symbol: "cm", iconName: "ruler.fill",     color: .indigo),
+        MetricTemplate(name: "Neck",     symbol: "cm", iconName: "ruler.fill",     color: .mint),
+        MetricTemplate(name: "Arm",      symbol: "cm", iconName: "ruler.fill",     color: .cyan),
     ]
 }
 
@@ -73,19 +33,17 @@ struct AddMetricView: View {
     @State private var selectedTemplate: MetricTemplate?
     @State private var name: String = ""
     @State private var symbol: String = ""
-    @State private var selectedKind: BodyMetricKind = .custom
 
     private var isValid: Bool {
         !name.trimmingCharacters(in: .whitespaces).isEmpty
     }
 
-    /// The kind to actually save.
-    /// Template picks are trusted as-is; free-text symbols are inferred.
+    /// Kind is always inferred from the symbol — templates just pre-fill the fields.
     private var inferredKind: BodyMetricKind {
-        selectedTemplate != nil ? selectedKind : BodyMetricKind.infer(from: symbol)
+        BodyMetricKind.infer(from: symbol)
     }
 
-    /// Shown when the user typed a recognised unit and no template is selected.
+    /// Shown when the typed symbol is a recognised unit.
     private var conversionHint: String? {
         switch inferredKind {
         case .weight:
@@ -129,45 +87,17 @@ struct AddMetricView: View {
         .presentationCornerRadius(24)
     }
 
-    // MARK: Template section
-
-    private var templateSection: some View {
-        Section {
-            LazyVGrid(
-                columns: [GridItem(.flexible()), GridItem(.flexible())],
-                spacing: 10
-            ) {
-                ForEach(MetricTemplate.predefined) { template in
-                    TemplateCard(
-                        template: template,
-                        unitSystem: appState.unitSystem,
-                        isSelected: selectedTemplate?.id == template.id
-                    ) {
-                        toggleTemplate(template)
-                    }
-                }
-            }
-            .listRowInsets(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10))
-            .listRowBackground(Color.clear)
-        } header: {
-            Text("Quick Pick")
-        } footer: {
-            Text("Tap a template to pre-fill the fields above, or enter a custom metric manually.")
-        }
-    }
-
-    // MARK: Custom entry section
+    // MARK: Details section
 
     private var customSection: some View {
         Section {
-            // Name row
             HStack(spacing: 10) {
-                Image(systemName: templateIcon)
-                    .foregroundStyle(templateColor)
+                Image(systemName: selectedTemplate?.iconName ?? "plus.circle")
+                    .foregroundStyle(selectedTemplate?.color ?? Color.secondary)
                     .frame(width: 22)
                 TextField("Name", text: $name)
             }
-            
+
             HStack(spacing: 10) {
                 Image(systemName: inferredKind == .custom ? "tag.fill" : "arrow.triangle.2.circlepath")
                     .foregroundStyle(inferredKind == .custom ? Color.secondary : Color.blue)
@@ -187,27 +117,43 @@ struct AddMetricView: View {
         .animation(.easeInOut(duration: 0.2), value: conversionHint != nil)
     }
 
+    // MARK: Template section
+
+    private var templateSection: some View {
+        Section {
+            LazyVGrid(
+                columns: [GridItem(.flexible()), GridItem(.flexible())],
+                spacing: 10
+            ) {
+                ForEach(MetricTemplate.predefined) { template in
+                    TemplateCard(
+                        template: template,
+                        isSelected: selectedTemplate?.id == template.id
+                    ) {
+                        toggleTemplate(template)
+                    }
+                }
+            }
+            .listRowInsets(EdgeInsets(top: 10, leading: 10, bottom: 10, trailing: 10))
+            .listRowBackground(Color.clear)
+        } header: {
+            Text("Quick Pick")
+        } footer: {
+            Text("Tap a template to pre-fill the name and symbol above.")
+        }
+    }
+
     // MARK: Helpers
-
-    private var templateIcon: String {
-        selectedTemplate?.iconName ?? "plus.circle"
-    }
-
-    private var templateColor: Color {
-        selectedTemplate?.color ?? .secondary
-    }
 
     private func toggleTemplate(_ template: MetricTemplate) {
         if selectedTemplate?.id == template.id {
             selectedTemplate = nil
             name = ""
             symbol = ""
-            selectedKind = .custom
         } else {
             selectedTemplate = template
             name = template.name
-            symbol = template.symbol(for: appState.unitSystem)
-            selectedKind = template.kind
+            symbol = template.symbol
         }
     }
 }
@@ -216,11 +162,8 @@ struct AddMetricView: View {
 
 private struct TemplateCard: View {
     let template: MetricTemplate
-    let unitSystem: UnitSystem
     let isSelected: Bool
     let onTap: () -> Void
-
-    private var unit: String { template.symbol(for: unitSystem) }
 
     var body: some View {
         Button(action: onTap) {
@@ -238,7 +181,7 @@ private struct TemplateCard: View {
                 Text(template.name)
                     .font(.subheadline.weight(.semibold))
                     .foregroundStyle(isSelected ? .white : .primary)
-                Text(unit.isEmpty ? "—" : unit)
+                Text(template.symbol.isEmpty ? "—" : template.symbol)
                     .font(.caption.weight(.medium))
                     .foregroundStyle(isSelected ? .white.opacity(0.85) : .secondary)
             }
