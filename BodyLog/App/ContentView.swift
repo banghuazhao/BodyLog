@@ -27,5 +27,8 @@ struct ContentView: View {
                 OnboardingView(onFinished: {})
             }
         }
+        .onAppear {
+            AdManager.requestATTPermission(with: 3)
+        }
     }
 }
