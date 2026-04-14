@@ -6,19 +6,27 @@ import SwiftUI
 struct SettingsView: View {
     @State private var viewModel = SettingsViewModel()
     @Environment(AppState.self) private var appState
+    @Environment(\.openURL) private var openURL
     @State private var showingAddMetric = false
     @State private var editingMetric: Metric?
+    @State private var mailUnavailableMessage: String?
+
+    private let appStoreAppID = "6745432102"
+    private var appStoreURL: URL? { URL(string: "https://itunes.apple.com/app/id\(appStoreAppID)") }
+    private var reviewURL: URL? { URL(string: "https://itunes.apple.com/app/id\(appStoreAppID)?action=write-review") }
+    private let feedbackEmail = "support@appsbay.co"
 
     var body: some View {
         NavigationStack {
             Form {
                 unitSection
                 metricsSection
+                othersSection
             }
             .navigationTitle("Settings")
             .toolbar {
                 ToolbarItem(placement: .primaryAction) {
-                    Button("Add Metric", systemImage: "plus") {
+                    Button("Add Metric") {
                         showingAddMetric = true
                     }
                 }
@@ -33,6 +41,14 @@ struct SettingsView: View {
                 Button("OK") { viewModel.errorMessage = nil }
             } message: {
                 Text(viewModel.errorMessage ?? "")
+            }
+            .alert("Mail", isPresented: Binding(
+                get: { mailUnavailableMessage != nil },
+                set: { if !$0 { mailUnavailableMessage = nil } }
+            )) {
+                Button("OK", role: .cancel) { mailUnavailableMessage = nil }
+            } message: {
+                Text(mailUnavailableMessage ?? "")
             }
         }
     }
@@ -75,6 +91,57 @@ struct SettingsView: View {
             Text("Metrics")
         } footer: {
             Text("Tap a metric to set start and goal values.")
+        }
+    }
+
+    private var othersSection: some View {
+        Section("Others") {
+            NavigationLink(destination: MoreAppsView()) {
+                Label("More Apps", systemImage: "storefront")
+                    .foregroundStyle(.blue)
+            }
+
+            if let reviewURL {
+                Button {
+                    openURL(reviewURL)
+                } label: {
+                    Label("Rate Us", systemImage: "star.fill")
+                }
+            }
+
+            Button {
+                openFeedbackMail()
+            } label: {
+                Label("Feedback", systemImage: "envelope.fill")
+            }
+
+            if let appStoreURL {
+                ShareLink(item: appStoreURL) {
+                    Label("Share App", systemImage: "square.and.arrow.up")
+                }
+            }
+        }
+    }
+
+    private func openFeedbackMail() {
+        guard var components = URLComponents(string: "mailto:\(feedbackEmail)") else {
+            mailUnavailableMessage = "Invalid feedback email address."
+            return
+        }
+        components.queryItems = [
+            URLQueryItem(name: "subject", value: "BodyLog Feedback"),
+            URLQueryItem(name: "body", value: "Hi BodyLog team,\n\n")
+        ]
+        guard let mailURL = components.url else {
+            mailUnavailableMessage = "Could not build the mail link."
+            return
+        }
+        openURL(mailURL) { accepted in
+            Task { @MainActor in
+                if !accepted {
+                    mailUnavailableMessage = "Could not open Mail. On Simulator, open the Mail app and sign in, or try on a device with Mail configured."
+                }
+            }
         }
     }
 }
