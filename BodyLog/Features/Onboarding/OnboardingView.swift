@@ -6,34 +6,35 @@ import SwiftUI
 struct OnboardingView: View {
     @State private var viewModel = OnboardingViewModel()
     @Environment(AppState.self) private var appState
-    @State private var step = 0
+    @State private var page = 0
     let onFinished: () -> Void
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 20) {
-                ProgressView(value: Double(step + 1), total: 2)
-                    .tint(.blue)
-                    .padding(.top, 8)
-
-                Group {
-                    if step == 0 {
-                        introStep
-                    } else {
-                        setupStep
-                    }
+        VStack(spacing: 0) {
+            ZStack {
+                if page == 0 {
+                    welcomePage
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .leading).combined(with: .opacity),
+                            removal: .move(edge: .leading).combined(with: .opacity)
+                        ))
+                } else {
+                    setupPage
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .trailing).combined(with: .opacity),
+                            removal: .move(edge: .trailing).combined(with: .opacity)
+                        ))
                 }
-                .frame(maxHeight: .infinity, alignment: .top)
-
-                actionBar
             }
-            .padding(.horizontal, 20)
-            .padding(.bottom, 20)
-            .navigationTitle("Welcome to BodyLog")
-            .navigationBarTitleDisplayMode(.inline)
+            .clipped()
+            .frame(maxHeight: .infinity)
+
+            bottomBar
         }
-        .onAppear {
-            viewModel.loadInitialValuesIfNeeded()
+        .ignoresSafeArea(.keyboard)
+        .onAppear { viewModel.loadInitialValuesIfNeeded() }
+        .onChange(of: viewModel.selectedUnitSystem) { old, new in
+            viewModel.convertValues(from: old, to: new)
         }
         .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
             Button("OK") { viewModel.errorMessage = nil }
@@ -42,107 +43,275 @@ struct OnboardingView: View {
         }
     }
 
-    private var introStep: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("Track your body data with less effort.")
-                    .font(.title2.weight(.semibold))
-                Text("Start simple: set your baseline, define your goal, and log consistently.")
+    // MARK: - Welcome Page
+
+    private var welcomePage: some View {
+        ScrollView {
+            VStack(spacing: 0) {
+                ZStack {
+                    Circle()
+                        .fill(.blue.opacity(0.1))
+                        .frame(width: 120, height: 120)
+                    Image(systemName: "figure.arms.open")
+                        .font(.system(size: 52))
+                        .foregroundStyle(.blue)
+                }
+                .padding(.top, 56)
+                .padding(.bottom, 20)
+
+                Text("BodyLog")
+                    .font(.largeTitle.weight(.bold))
+                    .padding(.bottom, 8)
+
+                Text("Track what matters. Reach your goals.")
                     .font(.body)
                     .foregroundStyle(.secondary)
-            }
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 40)
+                    .padding(.bottom, 44)
 
-            introductionItem(
-                icon: "target",
-                title: "Set clear goals",
-                message: "Add start and goal values for Weight and Height to unlock progress tracking."
-            )
-            introductionItem(
-                icon: "repeat.circle",
-                title: "Use your preferred units",
-                message: "Choose Metric or Imperial as default. You can change this later in Settings."
-            )
-            introductionItem(
-                icon: "calendar",
-                title: "Build a routine",
-                message: "Log entries regularly (daily or weekly) to get better trend insights."
-            )
+                VStack(alignment: .leading, spacing: 22) {
+                    featureRow(
+                        icon: "target",
+                        color: .blue,
+                        title: "Set clear goals",
+                        description: "Define your start and target to unlock progress tracking."
+                    )
+                    featureRow(
+                        icon: "chart.line.uptrend.xyaxis",
+                        color: .green,
+                        title: "See real trends",
+                        description: "Charts and stats that show how far you've come."
+                    )
+                    featureRow(
+                        icon: "calendar.badge.checkmark",
+                        color: .orange,
+                        title: "Build a habit",
+                        description: "Log daily or weekly for accurate insights over time."
+                    )
+                }
+                .padding(.horizontal, 28)
+                .padding(.bottom, 32)
+            }
         }
+        .scrollBounceBehavior(.basedOnSize)
     }
 
-    private var setupStep: some View {
-        Form {
-            Section("Default Unit System") {
-                Picker("Unit System", selection: $viewModel.selectedUnitSystem) {
-                    ForEach(UnitSystem.allCases) { system in
-                        Text(system.displayName).tag(system)
+    // MARK: - Setup Page
+
+    private var setupPage: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 28) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Quick Setup")
+                        .font(.largeTitle.weight(.bold))
+                    Text("Choose your units and set a starting point.")
+                        .font(.body)
+                        .foregroundStyle(.secondary)
+                }
+                .padding(.top, 40)
+
+                // Unit system
+                VStack(alignment: .leading, spacing: 10) {
+                    sectionLabel("Unit System")
+                    HStack(spacing: 12) {
+                        ForEach(UnitSystem.allCases) { system in
+                            unitSystemCard(system)
+                        }
                     }
                 }
-                .pickerStyle(.segmented)
-            }
 
-            Section("Weight Goal Setup") {
-                valueRow(title: "Start", text: $viewModel.weightStartText, unit: viewModel.unitSuffixes.weight)
-                valueRow(title: "Goal", text: $viewModel.weightGoalText, unit: viewModel.unitSuffixes.weight)
-            }
-
-            Section("Height Goal Setup") {
-                valueRow(title: "Start", text: $viewModel.heightStartText, unit: viewModel.unitSuffixes.height)
-                valueRow(title: "Goal", text: $viewModel.heightGoalText, unit: viewModel.unitSuffixes.height)
-            }
-        }
-        .scrollContentBackground(.hidden)
-    }
-
-    private var actionBar: some View {
-        HStack(spacing: 12) {
-            if step == 1 {
-                Button("Back") {
-                    withAnimation(.easeInOut(duration: 0.2)) { step = 0 }
+                // Weight
+                VStack(alignment: .leading, spacing: 10) {
+                    sectionLabel("Weight")
+                    metricCard(
+                        icon: "scalemass.fill",
+                        name: "Weight",
+                        color: .blue,
+                        unit: viewModel.unitSuffixes.weight,
+                        startText: $viewModel.weightStartText,
+                        goalText: $viewModel.weightGoalText
+                    )
                 }
-                .buttonStyle(.bordered)
-            }
 
-            Button(step == 0 ? "Continue" : "Get Started") {
-                if step == 0 {
-                    withAnimation(.easeInOut(duration: 0.2)) { step = 1 }
-                } else {
-                    completeOnboarding()
+                // Height
+                VStack(alignment: .leading, spacing: 10) {
+                    sectionLabel("Height")
+                    metricCard(
+                        icon: "figure.stand",
+                        name: "Height",
+                        color: .green,
+                        unit: viewModel.unitSuffixes.height,
+                        startText: $viewModel.heightStartText,
+                        goalText: $viewModel.heightGoalText
+                    )
                 }
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(step == 1 && !viewModel.canFinish)
+            .padding(.horizontal, 24)
+            .padding(.bottom, 16)
         }
+        .scrollBounceBehavior(.basedOnSize)
+        .scrollDismissesKeyboard(.interactively)
     }
 
-    private func introductionItem(icon: String, title: String, message: String) -> some View {
-        HStack(alignment: .top, spacing: 12) {
-            Image(systemName: icon)
-                .font(.headline)
-                .foregroundStyle(.blue)
-                .frame(width: 22)
+    // MARK: - Bottom Bar
 
-            VStack(alignment: .leading, spacing: 4) {
+    private var bottomBar: some View {
+        VStack(spacing: 0) {
+            Divider()
+            HStack(spacing: 12) {
+                if page == 1 {
+                    Button("Back") {
+                        withAnimation(.easeInOut(duration: 0.3)) { page = 0 }
+                    }
+                    .buttonStyle(.bordered)
+                    .controlSize(.large)
+                }
+
+                Button(page == 0 ? "Continue" : "Get Started") {
+                    if page == 0 {
+                        withAnimation(.easeInOut(duration: 0.3)) { page = 1 }
+                    } else {
+                        completeOnboarding()
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.large)
+                .disabled(page == 1 && !viewModel.canFinish)
+                .frame(maxWidth: .infinity)
+                .overlay(alignment: .trailing) {
+                    if page == 1 && viewModel.isSaving {
+                        ProgressView()
+                            .tint(.white)
+                            .padding(.trailing, 16)
+                    }
+                }
+            }
+            .padding(.horizontal, 24)
+            .padding(.top, 16)
+            .padding(.bottom, 32)
+        }
+        .background(.regularMaterial)
+    }
+
+    // MARK: - Subviews
+
+    private func featureRow(icon: String, color: Color, title: String, description: String) -> some View {
+        HStack(alignment: .top, spacing: 16) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(color.opacity(0.12))
+                    .frame(width: 44, height: 44)
+                Image(systemName: icon)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(color)
+            }
+            VStack(alignment: .leading, spacing: 3) {
                 Text(title).font(.headline)
-                Text(message)
+                Text(description)
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
 
-    private func valueRow(title: String, text: Binding<String>, unit: String) -> some View {
+    private func sectionLabel(_ text: String) -> some View {
+        Text(text)
+            .font(.subheadline.weight(.semibold))
+            .foregroundStyle(.secondary)
+    }
+
+    private func unitSystemCard(_ system: UnitSystem) -> some View {
+        let isSelected = viewModel.selectedUnitSystem == system
+        return Button {
+            viewModel.selectedUnitSystem = system
+        } label: {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 6) {
+                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                        .foregroundStyle(isSelected ? .white : .secondary)
+                    Text(system.displayName)
+                        .font(.subheadline.weight(.bold))
+                        .foregroundStyle(isSelected ? .white : .primary)
+                }
+                Text(system == .metric ? "kg · cm" : "lbs · in")
+                    .font(.caption.weight(.medium))
+                    .foregroundStyle(isSelected ? .white.opacity(0.85) : .secondary)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                isSelected ? Color.blue : Color(.systemGray6),
+                in: RoundedRectangle(cornerRadius: 14)
+            )
+        }
+        .buttonStyle(.plain)
+        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: isSelected)
+    }
+
+    private func metricCard(
+        icon: String,
+        name: String,
+        color: Color,
+        unit: String,
+        startText: Binding<String>,
+        goalText: Binding<String>
+    ) -> some View {
+        VStack(spacing: 0) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .foregroundStyle(color)
+                Text(name)
+                    .font(.headline)
+                Spacer()
+                Text(unit)
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.secondary)
+                    .contentTransition(.numericText())
+                    .animation(.easeInOut(duration: 0.2), value: unit)
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+
+            Divider().padding(.leading, 16)
+
+            metricValueRow(label: "Start", text: startText, unit: unit)
+
+            Divider().padding(.leading, 16)
+
+            metricValueRow(label: "Goal", text: goalText, unit: unit)
+        }
+        .background(Color(.systemBackground), in: RoundedRectangle(cornerRadius: 16))
+        .overlay {
+            RoundedRectangle(cornerRadius: 16)
+                .strokeBorder(Color(.separator).opacity(0.4), lineWidth: 0.5)
+        }
+        .shadow(color: .black.opacity(0.05), radius: 8, y: 2)
+    }
+
+    private func metricValueRow(label: String, text: Binding<String>, unit: String) -> some View {
         HStack {
-            Text(title)
+            Text(label)
+                .foregroundStyle(.secondary)
             Spacer()
-            TextField("0", text: text)
+            TextField("—", text: text)
                 .keyboardType(.decimalPad)
                 .multilineTextAlignment(.trailing)
-                .frame(width: 90)
+                .frame(width: 80)
+                .font(.body.monospacedDigit())
             Text(unit)
+                .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .frame(width: 36, alignment: .leading)
+                .contentTransition(.numericText())
+                .animation(.easeInOut(duration: 0.2), value: unit)
         }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
     }
+
+    // MARK: - Actions
 
     private func completeOnboarding() {
         Task {
