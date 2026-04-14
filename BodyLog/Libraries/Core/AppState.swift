@@ -14,11 +14,19 @@ final class AppState {
             UserDefaults.standard.set(unitSystem.rawValue, forKey: AppState.unitSystemKey)
         }
     }
+    
+    var hasCompletedOnboarding: Bool {
+        didSet {
+            UserDefaults.standard.set(hasCompletedOnboarding, forKey: AppState.onboardingCompletedKey)
+        }
+    }
 
     private static let unitSystemKey = "bodylog_unitSystem"
+    private static let onboardingCompletedKey = "bodylog_onboardingCompleted"
 
     private init() {
         let saved = UserDefaults.standard.string(forKey: AppState.unitSystemKey) ?? ""
         unitSystem = UnitSystem(rawValue: saved) ?? .metric
+        hasCompletedOnboarding = UserDefaults.standard.bool(forKey: AppState.onboardingCompletedKey)
     }
 }

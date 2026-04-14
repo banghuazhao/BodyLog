@@ -60,9 +60,9 @@ struct OverviewView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             topSection
-            if let s = start, let g = goal, let prog = progress {
+            if let s = start, let g = goal {
                 Divider().padding(.horizontal, 16)
-                progressSection(progress: prog, start: s, goal: g)
+                progressSection(progress: progress, start: s, goal: g)
             } else {
                 noGoalHint
             }
@@ -129,23 +129,25 @@ struct OverviewView: View {
 
     // MARK: Progress bar section
 
-    private func progressSection(progress: Double, start: Double, goal: Double) -> some View {
+    private func progressSection(progress: Double?, start: Double, goal: Double) -> some View {
         VStack(spacing: 8) {
             GeometryReader { geo in
                 ZStack(alignment: .leading) {
                     Capsule()
                         .fill(metric.accentColor.opacity(0.12))
                         .frame(height: 6)
-                    Capsule()
-                        .fill(
-                            LinearGradient(
-                                colors: [metric.accentColor.opacity(0.6), metric.accentColor],
-                                startPoint: .leading,
-                                endPoint: .trailing
+                    if let progress {
+                        Capsule()
+                            .fill(
+                                LinearGradient(
+                                    colors: [metric.accentColor.opacity(0.6), metric.accentColor],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
                             )
-                        )
-                        .frame(width: max(6, geo.size.width * progress), height: 6)
-                        .animation(.spring(response: 0.6, dampingFraction: 0.8), value: progress)
+                            .frame(width: max(6, geo.size.width * progress), height: 6)
+                            .animation(.spring(response: 0.6, dampingFraction: 0.8), value: progress)
+                    }
                 }
             }
             .frame(height: 6)
