@@ -8,15 +8,29 @@
 
 /* Begin PBXBuildFile section */
 		99BE8AF92F8B0A2E00480D3B /* SQLiteData in Frameworks */ = {isa = PBXBuildFile; productRef = 99BE8AF82F8B0A2E00480D3B /* SQLiteData */; };
+		99E425BF2F8E028C00EE8227 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 99E425BE2F8E028C00EE8227 /* GoogleMobileAds */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
 		99BE8AD42F8AFF5800480D3B /* BodyLog.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BodyLog.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		99E425C82F8E03C700EE8227 /* Exceptions for "BodyLog" folder in "BodyLog" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 99BE8AD32F8AFF5800480D3B /* BodyLog */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		99BE8AD62F8AFF5800480D3B /* BodyLog */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				99E425C82F8E03C700EE8227 /* Exceptions for "BodyLog" folder in "BodyLog" target */,
+			);
 			path = BodyLog;
 			sourceTree = "<group>";
 		};
@@ -27,6 +41,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				99E425BF2F8E028C00EE8227 /* GoogleMobileAds in Frameworks */,
 				99BE8AF92F8B0A2E00480D3B /* SQLiteData in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -71,6 +86,7 @@
 			name = BodyLog;
 			packageProductDependencies = (
 				99BE8AF82F8B0A2E00480D3B /* SQLiteData */,
+				99E425BE2F8E028C00EE8227 /* GoogleMobileAds */,
 			);
 			productName = BodyLog;
 			productReference = 99BE8AD42F8AFF5800480D3B /* BodyLog.app */;
@@ -102,6 +118,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				99BE8AF72F8B0A2E00480D3B /* XCRemoteSwiftPackageReference "sqlite-data" */,
+				99E425BD2F8E028C00EE8227 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 99BE8AD52F8AFF5800480D3B /* Products */;
@@ -136,6 +153,8 @@
 /* Begin XCBuildConfiguration section */
 		99BE8ADD2F8AFF5A00480D3B /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 99BE8AD62F8AFF5800480D3B /* BodyLog */;
+			baseConfigurationReferenceRelativePath = Config/Debug.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -200,6 +219,8 @@
 		};
 		99BE8ADE2F8AFF5A00480D3B /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 99BE8AD62F8AFF5800480D3B /* BodyLog */;
+			baseConfigurationReferenceRelativePath = Config/Release.xcconfig;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
@@ -257,6 +278,8 @@
 		};
 		99BE8AE02F8AFF5A00480D3B /* Debug */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 99BE8AD62F8AFF5800480D3B /* BodyLog */;
+			baseConfigurationReferenceRelativePath = Config/Debug.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -265,6 +288,7 @@
 				DEVELOPMENT_TEAM = F694X76A5X;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BodyLog/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -289,6 +313,8 @@
 		};
 		99BE8AE12F8AFF5A00480D3B /* Release */ = {
 			isa = XCBuildConfiguration;
+			baseConfigurationReferenceAnchor = 99BE8AD62F8AFF5800480D3B /* BodyLog */;
+			baseConfigurationReferenceRelativePath = Config/Release.xcconfig;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
@@ -297,6 +323,7 @@
 				DEVELOPMENT_TEAM = F694X76A5X;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = BodyLog/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -351,6 +378,14 @@
 				minimumVersion = 1.6.1;
 			};
 		};
+		99E425BD2F8E028C00EE8227 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 13.2.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -358,6 +393,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 99BE8AF72F8B0A2E00480D3B /* XCRemoteSwiftPackageReference "sqlite-data" */;
 			productName = SQLiteData;
+		};
+		99E425BE2F8E028C00EE8227 /* GoogleMobileAds */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 99E425BD2F8E028C00EE8227 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
+			productName = GoogleMobileAds;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -3,10 +3,12 @@
 
 import SQLiteData
 import SwiftUI
+import GoogleMobileAds
 
 @main
 struct BodyLogApp: App {
     init() {
+        MobileAds.shared.start(completionHandler: nil)
         prepareDependencies {
             $0.defaultDatabase = try! makeAppDatabase()
         }
