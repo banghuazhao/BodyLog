@@ -6,6 +6,7 @@ import SwiftUI
 struct OverviewView: View {
     @State private var viewModel = OverviewViewModel()
     @Environment(AppState.self) private var appState
+    @State private var showingAddMetric = false
 
     var body: some View {
         NavigationStack {
@@ -28,11 +29,21 @@ struct OverviewView: View {
                     }
                 }
             }
+            .toolbar {
+                ToolbarItem(placement: .primaryAction) {
+                    Button("Add Metric") {
+                        showingAddMetric = true
+                    }
+                }
+            }
             .navigationTitle("Overview")
             .alert("Error", isPresented: .constant(viewModel.errorMessage != nil)) {
                 Button("OK") { viewModel.errorMessage = nil }
             } message: {
                 Text(viewModel.errorMessage ?? "")
+            }
+            .sheet(isPresented: $showingAddMetric) {
+                AddMetricView(viewModel: SettingsViewModel())
             }
         }
     }
