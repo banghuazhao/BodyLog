@@ -15,6 +15,7 @@ enum AppConstants {
     enum AppID {
         static let tripMarkID = "6464474080"
         static let moneyTrackerAppID = "1534244892"
+        static let bmiDiaryAppID = "1521281509"
         static let novelsHubAppID = "1528820845"
     }
 }
@@ -65,12 +66,6 @@ struct MoreAppsView: View {
 
 enum AppItemStore {
     static let allItems: [AppItem] = [
-        AppItem(
-            title: "Longevity Master: Habits",
-            detail: "Healthy Habits for Long Life",
-            iconAssetName: "appIcon_longivity",
-            url: URL(string: "http://itunes.apple.com/app/id6747810020")
-        ),
         AppItem(
             title: "TripMark",
             detail: "Vacation, Itinerary Planner",
@@ -136,6 +131,12 @@ enum AppItemStore {
             detail: "Sudoku Puzzles",
             iconAssetName: "appIcon_sudoku_lover",
             url: URL(string: "http://itunes.apple.com/app/id1620749798")
+        ),
+        AppItem(
+            title: "BMI Diary",
+            detail: "Fitness, Weight Loss & Health",
+            iconAssetName: "appIcon_longivity",
+            url: URL(string: "http://itunes.apple.com/app/id\(AppConstants.AppID.bmiDiaryAppID)")
         ),
         AppItem(
             title: "More Apps",
