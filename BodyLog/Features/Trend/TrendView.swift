@@ -18,23 +18,31 @@ struct TrendView: View {
                     Divider()
                 }
 
-                if viewModel.chartDataPoints.isEmpty {
-                    ContentUnavailableView(
-                        "No Data",
-                        systemImage: "chart.line.uptrend.xyaxis",
-                        description: Text("Log some entries to see your trend over time.")
-                    )
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                } else {
-                    ScrollView {
-                        VStack(spacing: 16) {
-                            timeRangePicker
-                            chartCard
-                            statsCard
+                Group {
+                    if viewModel.chartDataPoints.isEmpty {
+                        ScrollView {
+                            VStack(spacing: 20) {
+                                ContentUnavailableView(
+                                    "No Data",
+                                    systemImage: "chart.line.uptrend.xyaxis",
+                                    description: Text("Log some entries to see your trend over time.")
+                                )
+                                .frame(maxWidth: .infinity, minHeight: 260)
+                            }
+                            .padding(16)
                         }
-                        .padding(16)
+                    } else {
+                        ScrollView {
+                            VStack(spacing: 16) {
+                                timeRangePicker
+                                chartCard
+                                statsCard
+                            }
+                            .padding(16)
+                        }
                     }
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .navigationTitle("Trend")
             .onAppear {

@@ -41,91 +41,57 @@ class AdManager {
     }
 }
 
-struct BannerView: UIViewControllerRepresentable {
-    @State var viewWidth: CGFloat = .zero
-    private let bannerView = GoogleMobileAds.BannerView()
+struct BannerView: View {
+    static let fixedAdWidth: CGFloat = 320
+    static let fixedAdHeight: CGFloat = 100
     private let adUnitID = AdManager.GoogleAdsID.bannerViewAdUnitID
 
-    func makeUIViewController(context: Context) -> some UIViewController {
-        let bannerViewController = BannerViewController()
-        bannerView.adUnitID = adUnitID
-        bannerView.rootViewController = bannerViewController
-        bannerView.delegate = context.coordinator
-        bannerView.translatesAutoresizingMaskIntoConstraints = false
-        bannerViewController.view.addSubview(bannerView)
-        // Constrain GADBannerView to the bottom of the view.
-        NSLayoutConstraint.activate([
-            bannerView.bottomAnchor.constraint(
-                equalTo: bannerViewController.view.safeAreaLayoutGuide.bottomAnchor),
-            bannerView.centerXAnchor.constraint(equalTo: bannerViewController.view.centerXAnchor),
-        ])
-        bannerViewController.delegate = context.coordinator
-
-        return bannerViewController
+    var body: some View {
+        BannerContainer(adUnitID: adUnitID)
     }
+}
 
-    func updateUIViewController(_ uiViewController: UIViewControllerType, context: Context) {
-        guard viewWidth != .zero else { return }
-
-        bannerView.adSize = currentOrientationAnchoredAdaptiveBanner(width: viewWidth)
-        let request = Request()
-        request.scene = UIApplication.shared.connectedScenes.first as? UIWindowScene
-        bannerView.load(request)
-    }
+private struct BannerContainer: UIViewRepresentable {
+    let adUnitID: String
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(self)
+        Coordinator()
     }
 
-    class Coordinator: NSObject, BannerViewControllerWidthDelegate, BannerViewDelegate {
-        let parent: BannerView
+    func makeUIView(context: Context) -> GoogleMobileAds.BannerView {
+        let banner = GoogleMobileAds.BannerView()
+        banner.delegate = context.coordinator
+        banner.adUnitID = adUnitID
+        return banner
+    }
 
-        init(_ parent: BannerView) {
-            self.parent = parent
-        }
+    func updateUIView(_ banner: GoogleMobileAds.BannerView, context: Context) {
+        guard !adUnitID.isEmpty else { return }
+        guard let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene else { return }
+        let root = scene.windows.first(where: \.isKeyWindow)?.rootViewController
+            ?? scene.windows.first?.rootViewController
+        guard let root else { return }
 
-        // MARK: - BannerViewControllerWidthDelegate methods
+        banner.rootViewController = root
+        let adSize = adSizeFor(cgSize: CGSize(width: BannerView.fixedAdWidth, height: BannerView.fixedAdHeight))
+        if context.coordinator.didLoad { return }
 
-        func bannerViewController(
-            _ bannerViewController: BannerViewController, didUpdate width: CGFloat
-        ) {
-            parent.viewWidth = width
-        }
+        context.coordinator.didLoad = true
+        banner.adSize = adSize
+        let request = Request()
+        request.scene = scene
+        banner.load(request)
+    }
 
-        // MARK: - BannerViewDelegate methods
+    final class Coordinator: NSObject, BannerViewDelegate {
+        var didLoad = false
 
-        private func bannerViewDidReceiveAd(_ bannerView: BannerView) {
+        func bannerViewDidReceiveAd(_ bannerView: GoogleMobileAds.BannerView) {
             print("DID RECEIVE Banner AD")
         }
 
-        private func bannerView(_ bannerView: BannerView, didFailToReceiveAdWithError error: Error) {
+        func bannerView(_ bannerView: GoogleMobileAds.BannerView, didFailToReceiveAdWithError error: Error) {
             print("DID NOT RECEIVE Banner AD: \(error.localizedDescription)")
         }
     }
 }
-
-protocol BannerViewControllerWidthDelegate: AnyObject {
-    func bannerViewController(_ bannerViewController: BannerViewController, didUpdate width: CGFloat)
-}
-
-class BannerViewController: UIViewController {
-    weak var delegate: BannerViewControllerWidthDelegate?
-
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-
-        delegate?.bannerViewController(
-            self, didUpdate: view.frame.inset(by: view.safeAreaInsets).size.width)
-    }
-
-    override func viewWillTransition(
-        to size: CGSize, with coordinator: UIViewControllerTransitionCoordinator
-    ) {
-        coordinator.animate { _ in
-            // do nothing
-        } completion: { _ in
-            self.delegate?.bannerViewController(
-                self, didUpdate: self.view.frame.inset(by: self.view.safeAreaInsets).size.width)
-        }
-    }
-} 

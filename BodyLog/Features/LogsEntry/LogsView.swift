@@ -19,6 +19,7 @@ struct LogsView: View {
                 }
 
                 logList
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             .navigationTitle("Logs")
             .toolbar {
@@ -63,16 +64,23 @@ struct LogsView: View {
     @ViewBuilder
     private var logList: some View {
         if viewModel.logRows.isEmpty {
-            ContentUnavailableView(
-                "No Entries",
-                systemImage: "list.bullet.rectangle",
-                description: Text(
-                    viewModel.selectedMetricId == nil
-                        ? "Select a metric to view entries."
-                        : "Tap + to log your first entry."
-                )
-            )
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            ScrollView {
+                VStack(spacing: 20) {
+                    ContentUnavailableView(
+                        "No Entries",
+                        systemImage: "list.bullet.rectangle",
+                        description: Text(
+                            viewModel.selectedMetricId == nil
+                                ? "Select a metric to view entries."
+                                : "Tap + to log your first entry."
+                        )
+                    )
+                    .frame(maxWidth: .infinity, minHeight: 260)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+            }
         } else {
             let unit = viewModel.selectedMetric?.displaySymbol(unitSystem: appState.unitSystem) ?? ""
             let color = viewModel.selectedMetric?.accentColor ?? .blue

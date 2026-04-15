@@ -18,10 +18,13 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
-            Form {
-                unitSection
-                metricsSection
-                othersSection
+            VStack(spacing: 0) {
+                Form {
+                    unitSection
+                    metricsSection
+                    othersSection
+                    adsSection
+                }
             }
             .navigationTitle("Settings")
             .toolbar {
@@ -120,6 +123,19 @@ struct SettingsView: View {
                     Label("Share App", systemImage: "square.and.arrow.up")
                 }
             }
+        }
+    }
+
+    private var adsSection: some View {
+        Section {
+            HStack {
+                Spacer(minLength: 0)
+                BannerView()
+                    .frame(width: 320, height: 100)
+                Spacer(minLength: 0)
+            }
+            .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 8, trailing: 0))
+            .listRowBackground(Color.clear)
         }
     }
 
