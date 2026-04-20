@@ -2,6 +2,14 @@
 
 A clean, modern iOS app for tracking body metrics — weight, height, body fat, measurements, and any custom metric you define.
 
+## Available on the App Store
+
+BodyLog is now live on the App Store: [BodyLog: Body Tracker](https://apps.apple.com/us/app/bodylog-body-tracker/id6762171840)
+
+## Screenshots
+
+![BodyLog app screenshot](Screenshots/screenshot.png)
+
 ## Features
 
 ### 4 Tabs
